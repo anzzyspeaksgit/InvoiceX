@@ -23,11 +23,14 @@ contract InvoiceMarketplaceTest is Test {
 
     address public seller = address(0x1);
     address public buyer = address(0x2);
+    address public admin = address(this);
 
     function setUp() public {
         paymentToken = new MockPaymentToken();
         invoiceNFT = new InvoiceNFT();
         marketplace = new InvoiceMarketplace(address(invoiceNFT), address(paymentToken));
+
+        invoiceNFT.grantRole(invoiceNFT.MINTER_ROLE(), admin);
 
         // Setup seller
         paymentToken.mint(seller, 10000 * 10 ** 18);
@@ -39,18 +42,34 @@ contract InvoiceMarketplaceTest is Test {
     }
 
     function testListingAndBuying() public {
-        vm.startPrank(seller);
+        // Mint NFT to seller
+        uint256 invoiceId = invoiceNFT.mintInvoice(seller, "ipfs://test", 1000 * 10 ** 18, 900 * 10 ** 18, block.timestamp + 30 days);
         
-        // Setup metadata hash properly formatted to bytes32, but for mock, let's just mock minting
-        // Using string for metadata URI in reality, depending on the InvoiceNFT implementation
-        // Since InvoiceNFT source isn't fully verified here, let's assume standard minting
-        // Assuming a `mintInvoice(address,string,uint256)` exists
-        // invoiceNFT.mintInvoice(seller, "ipfs://test", 1000 * 10 ** 18);
-        // uint256 invoiceId = 1;
-        // invoiceNFT.approve(address(marketplace), invoiceId);
-        // marketplace.listInvoice(invoiceId, 500 * 10 ** 18);
+        // Seller lists it
+        vm.startPrank(seller);
+        invoiceNFT.approve(address(marketplace), invoiceId);
+        marketplace.listInvoice(invoiceId, 500 * 10 ** 18);
         vm.stopPrank();
 
-        // Testing structure initialized
+        (uint256 id, address listSeller, uint256 price, bool active) = marketplace.listings(invoiceId);
+        assertEq(id, invoiceId);
+        assertEq(listSeller, seller);
+        assertEq(price, 500 * 10 ** 18);
+        assertTrue(active);
+        assertEq(invoiceNFT.ownerOf(invoiceId), address(marketplace));
+
+        // Buyer buys it
+        vm.startPrank(buyer);
+        paymentToken.approve(address(marketplace), 500 * 10 ** 18);
+        marketplace.buyInvoice(invoiceId);
+        vm.stopPrank();
+
+        // Check ownership and balances
+        assertEq(invoiceNFT.ownerOf(invoiceId), buyer);
+        assertEq(paymentToken.balanceOf(seller), 10500 * 10 ** 18); // 10000 + 500
+        assertEq(paymentToken.balanceOf(buyer), 9500 * 10 ** 18);  // 10000 - 500
+        
+        (, , , bool finalActive) = marketplace.listings(invoiceId);
+        assertFalse(finalActive);
     }
 }
