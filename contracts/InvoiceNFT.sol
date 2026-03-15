@@ -3,15 +3,13 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 
 /**
  * @title InvoiceNFT
  * @dev Represents an individual business invoice tokenized as an NFT.
  */
 contract InvoiceNFT is ERC721URIStorage, AccessControl {
-    using Counters for Counters.Counter;
-    Counters.Counter private _tokenIds;
+    uint256 private _tokenIds;
 
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
@@ -45,8 +43,8 @@ contract InvoiceNFT is ERC721URIStorage, AccessControl {
         uint256 advanceAmount,
         uint256 dueDate
     ) external onlyRole(MINTER_ROLE) returns (uint256) {
-        _tokenIds.increment();
-        uint256 newItemId = _tokenIds.current();
+        _tokenIds++;
+        uint256 newItemId = _tokenIds;
 
         _mint(business, newItemId);
         _setTokenURI(newItemId, uri);
@@ -68,7 +66,7 @@ contract InvoiceNFT is ERC721URIStorage, AccessControl {
      * @notice Updates the status of an invoice
      */
     function updateStatus(uint256 tokenId, InvoiceStatus newStatus) external onlyRole(MINTER_ROLE) {
-        require(_exists(tokenId), "Invoice does not exist");
+        _requireOwned(tokenId);
         invoices[tokenId].status = newStatus;
         emit InvoiceStatusChanged(tokenId, newStatus);
     }

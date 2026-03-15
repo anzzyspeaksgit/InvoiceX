@@ -5,6 +5,10 @@ libs = ["lib"]
 test = "test"
 script = "script"
 cache_path = "cache"
+remappings = [
+    "@shared/=../../shared/",
+    "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/"
+]
 
 # RPC Endpoints for BNB Chain
 [rpc_endpoints]
