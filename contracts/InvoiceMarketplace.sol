@@ -20,6 +20,8 @@ contract InvoiceMarketplace is ReentrancyGuard {
 
     event InvoiceListed(uint256 indexed invoiceId, address indexed seller, uint256 price);
     event InvoiceSold(uint256 indexed invoiceId, address indexed buyer, uint256 price);
+    event ListingCancelled(uint256 indexed invoiceId, address indexed seller);
+    event ListingPriceUpdated(uint256 indexed invoiceId, uint256 newPrice);
 
     constructor(address _invoiceNFT, address _paymentToken) {
         invoiceNFT = InvoiceNFT(_invoiceNFT);
@@ -47,5 +49,26 @@ contract InvoiceMarketplace is ReentrancyGuard {
         invoiceNFT.transferFrom(address(this), msg.sender, invoiceId);
 
         emit InvoiceSold(invoiceId, msg.sender, listing.price);
+    }
+
+    function cancelListing(uint256 invoiceId) external nonReentrant {
+        Listing storage listing = listings[invoiceId];
+        require(listing.active, "Not listed for sale");
+        require(listing.seller == msg.sender, "Not the seller");
+
+        listing.active = false;
+        invoiceNFT.transferFrom(address(this), msg.sender, invoiceId);
+
+        emit ListingCancelled(invoiceId, msg.sender);
+    }
+
+    function updateListingPrice(uint256 invoiceId, uint256 newPrice) external {
+        Listing storage listing = listings[invoiceId];
+        require(listing.active, "Not listed for sale");
+        require(listing.seller == msg.sender, "Not the seller");
+        require(newPrice > 0, "Price must be greater than 0");
+
+        listing.price = newPrice;
+        emit ListingPriceUpdated(invoiceId, newPrice);
     }
 }

@@ -73,4 +73,35 @@ contract InvoiceMarketplaceTest is Test {
         (,,, bool finalActive) = marketplace.listings(invoiceId);
         assertFalse(finalActive);
     }
+
+    function testCancelListing() public {
+        uint256 invoiceId =
+            invoiceNFT.mintInvoice(seller, "ipfs://test", 1000 * 10 ** 18, 900 * 10 ** 18, block.timestamp + 30 days);
+
+        vm.startPrank(seller);
+        invoiceNFT.approve(address(marketplace), invoiceId);
+        marketplace.listInvoice(invoiceId, 500 * 10 ** 18);
+        
+        marketplace.cancelListing(invoiceId);
+        vm.stopPrank();
+
+        (,,, bool active) = marketplace.listings(invoiceId);
+        assertFalse(active);
+        assertEq(invoiceNFT.ownerOf(invoiceId), seller);
+    }
+
+    function testUpdateListingPrice() public {
+        uint256 invoiceId =
+            invoiceNFT.mintInvoice(seller, "ipfs://test", 1000 * 10 ** 18, 900 * 10 ** 18, block.timestamp + 30 days);
+
+        vm.startPrank(seller);
+        invoiceNFT.approve(address(marketplace), invoiceId);
+        marketplace.listInvoice(invoiceId, 500 * 10 ** 18);
+        
+        marketplace.updateListingPrice(invoiceId, 600 * 10 ** 18);
+        vm.stopPrank();
+
+        (,, uint256 price,) = marketplace.listings(invoiceId);
+        assertEq(price, 600 * 10 ** 18);
+    }
 }
