@@ -77,7 +77,7 @@ contract FactoringPool is BaseRWA {
      */
     function financeInvoice(uint256 tokenId) external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
         require(invoiceNFT.ownerOf(tokenId) != address(0), "Invoice not minted");
-        (uint256 faceValue, uint256 advanceAmount, , InvoiceNFT.InvoiceStatus status, address business) = invoiceNFT.invoices(tokenId);
+        (, uint256 advanceAmount, , InvoiceNFT.InvoiceStatus status, address business) = invoiceNFT.invoices(tokenId);
         
         require(status == InvoiceNFT.InvoiceStatus.Listed, "Invoice not listed");
         require(stablecoin.balanceOf(address(this)) >= advanceAmount, "Insufficient liquidity");
