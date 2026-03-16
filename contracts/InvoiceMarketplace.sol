@@ -23,14 +23,20 @@ contract InvoiceMarketplace is ReentrancyGuard {
     event ListingCancelled(uint256 indexed invoiceId, address indexed seller);
     event ListingPriceUpdated(uint256 indexed invoiceId, uint256 newPrice);
 
+    error NotOwner();
+    error InvalidPrice();
+    error NotListed();
+    error PaymentFailed();
+    error NotSeller();
+
     constructor(address _invoiceNFT, address _paymentToken) {
         invoiceNFT = InvoiceNFT(_invoiceNFT);
         paymentToken = IERC20(_paymentToken);
     }
 
     function listInvoice(uint256 invoiceId, uint256 price) external {
-        require(invoiceNFT.ownerOf(invoiceId) == msg.sender, "Not the owner");
-        require(price > 0, "Price must be greater than 0");
+        if (invoiceNFT.ownerOf(invoiceId) != msg.sender) revert NotOwner();
+        if (price == 0) revert InvalidPrice();
 
         invoiceNFT.transferFrom(msg.sender, address(this), invoiceId);
 
@@ -41,11 +47,11 @@ contract InvoiceMarketplace is ReentrancyGuard {
 
     function buyInvoice(uint256 invoiceId) external nonReentrant {
         Listing storage listing = listings[invoiceId];
-        require(listing.active, "Not listed for sale");
+        if (!listing.active) revert NotListed();
 
         listing.active = false;
 
-        require(paymentToken.transferFrom(msg.sender, listing.seller, listing.price), "Payment failed");
+        if (!paymentToken.transferFrom(msg.sender, listing.seller, listing.price)) revert PaymentFailed();
         invoiceNFT.transferFrom(address(this), msg.sender, invoiceId);
 
         emit InvoiceSold(invoiceId, msg.sender, listing.price);
@@ -53,8 +59,8 @@ contract InvoiceMarketplace is ReentrancyGuard {
 
     function cancelListing(uint256 invoiceId) external nonReentrant {
         Listing storage listing = listings[invoiceId];
-        require(listing.active, "Not listed for sale");
-        require(listing.seller == msg.sender, "Not the seller");
+        if (!listing.active) revert NotListed();
+        if (listing.seller != msg.sender) revert NotSeller();
 
         listing.active = false;
         invoiceNFT.transferFrom(address(this), msg.sender, invoiceId);
@@ -64,9 +70,9 @@ contract InvoiceMarketplace is ReentrancyGuard {
 
     function updateListingPrice(uint256 invoiceId, uint256 newPrice) external {
         Listing storage listing = listings[invoiceId];
-        require(listing.active, "Not listed for sale");
-        require(listing.seller == msg.sender, "Not the seller");
-        require(newPrice > 0, "Price must be greater than 0");
+        if (!listing.active) revert NotListed();
+        if (listing.seller != msg.sender) revert NotSeller();
+        if (newPrice == 0) revert InvalidPrice();
 
         listing.price = newPrice;
         emit ListingPriceUpdated(invoiceId, newPrice);

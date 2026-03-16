@@ -11,6 +11,8 @@ contract PaymentSettlement is Ownable {
 
     event PaymentSettled(uint256 indexed invoiceId, address indexed payee, uint256 amount);
 
+    error SettlementFailed();
+
     constructor(address _invoiceNFT, address _paymentToken) Ownable(msg.sender) {
         invoiceNFT = InvoiceNFT(_invoiceNFT);
         paymentToken = IERC20(_paymentToken);
@@ -18,7 +20,7 @@ contract PaymentSettlement is Ownable {
 
     function settleInvoicePayment(uint256 invoiceId, uint256 amount) external {
         address currentOwner = invoiceNFT.ownerOf(invoiceId);
-        require(paymentToken.transferFrom(msg.sender, currentOwner, amount), "Settlement transfer failed");
+        if (!paymentToken.transferFrom(msg.sender, currentOwner, amount)) revert SettlementFailed();
 
         emit PaymentSettled(invoiceId, currentOwner, amount);
     }
