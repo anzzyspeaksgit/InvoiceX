@@ -5,6 +5,7 @@ libs = ["lib"]
 test = "test"
 script = "script"
 cache_path = "cache"
+gas_reports = ["*"]
 remappings = [
     "@shared/=../../shared/",
     "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/"
