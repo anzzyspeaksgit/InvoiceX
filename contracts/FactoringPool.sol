@@ -121,6 +121,25 @@ contract FactoringPool is BaseRWA {
     }
 
     /**
+     * @notice Mark an invoice as defaulted, writing off the advance amount
+     */
+    function markDefaulted(uint256 tokenId) external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
+        (, uint256 advanceAmount,, InvoiceNFT.InvoiceStatus status,) = invoiceNFT.invoices(tokenId);
+
+        require(status == InvoiceNFT.InvoiceStatus.Financed, "Invoice not financed");
+        require(invoiceNFT.ownerOf(tokenId) == address(this), "Pool does not own invoice");
+
+        // Write down the pool value by the lost advance amount
+        if (totalPoolValue > advanceAmount) {
+            totalPoolValue -= advanceAmount;
+        } else {
+            totalPoolValue = 0;
+        }
+
+        invoiceNFT.updateStatus(tokenId, InvoiceNFT.InvoiceStatus.Defaulted);
+    }
+
+    /**
      * @notice BaseRWA override
      */
     function getAssetPrice() public view override returns (uint256) {

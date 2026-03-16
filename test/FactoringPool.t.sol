@@ -118,4 +118,25 @@ contract FactoringPoolTest is Test {
         (,,, InvoiceNFT.InvoiceStatus status,) = invoiceNFT.invoices(invoiceId);
         assertEq(uint256(status), uint256(InvoiceNFT.InvoiceStatus.Repaid));
     }
+
+    function testMarkDefaulted() public {
+        vm.prank(investor);
+        pool.deposit(2000 * 10 ** 18);
+
+        uint256 invoiceId =
+            invoiceNFT.mintInvoice(business, "ipfs://", 1000 * 10 ** 18, 900 * 10 ** 18, block.timestamp + 30 days);
+
+        vm.prank(business);
+        invoiceNFT.approve(address(pool), invoiceId);
+
+        pool.financeInvoice(invoiceId);
+        uint256 preDefaultPoolValue = pool.totalPoolValue();
+
+        pool.markDefaulted(invoiceId);
+
+        assertEq(pool.totalPoolValue(), preDefaultPoolValue - 900 * 10 ** 18); // lost advance
+
+        (,,, InvoiceNFT.InvoiceStatus status,) = invoiceNFT.invoices(invoiceId);
+        assertEq(uint256(status), uint256(InvoiceNFT.InvoiceStatus.Defaulted));
+    }
 }
