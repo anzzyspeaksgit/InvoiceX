@@ -41,7 +41,7 @@ contract Deploy is Script {
 
         // Setup Initial Roles and Permissions
         invoiceNFT.grantRole(invoiceNFT.MINTER_ROLE(), address(pool));
-        
+
         vm.stopBroadcast();
     }
 }

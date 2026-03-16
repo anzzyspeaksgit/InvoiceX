@@ -29,14 +29,14 @@ contract FactoringPoolTest is Test {
     function setUp() public {
         stablecoin = new MockStablecoin();
         invoiceNFT = new InvoiceNFT();
-        
+
         // Mock BaseRWA constructor requirements might need to be adjusted based on implementation
         pool = new FactoringPool(address(stablecoin), address(invoiceNFT));
 
         // Setup roles
         invoiceNFT.grantRole(invoiceNFT.MINTER_ROLE(), admin);
         invoiceNFT.grantRole(invoiceNFT.MINTER_ROLE(), address(pool)); // So pool can update status
-        
+
         pool.whitelistInvestor(investor);
         pool.whitelistInvestor(business);
         pool.whitelistInvestor(address(pool));
@@ -45,7 +45,7 @@ contract FactoringPoolTest is Test {
         stablecoin.mint(investor, 10000 * 10 ** 18);
         vm.prank(investor);
         stablecoin.approve(address(pool), 10000 * 10 ** 18);
-        
+
         // Setup payer funds
         stablecoin.mint(payer, 10000 * 10 ** 18);
         vm.prank(payer);
@@ -75,45 +75,47 @@ contract FactoringPoolTest is Test {
         // Pool gets liquidity
         vm.prank(investor);
         pool.deposit(2000 * 10 ** 18);
-        
+
         // Mint NFT
-        uint256 invoiceId = invoiceNFT.mintInvoice(business, "ipfs://", 1000 * 10 ** 18, 900 * 10 ** 18, block.timestamp + 30 days);
-        
+        uint256 invoiceId =
+            invoiceNFT.mintInvoice(business, "ipfs://", 1000 * 10 ** 18, 900 * 10 ** 18, block.timestamp + 30 days);
+
         // Business approves pool
         vm.prank(business);
         invoiceNFT.approve(address(pool), invoiceId);
-        
+
         // Finance
         pool.financeInvoice(invoiceId);
-        
+
         assertEq(invoiceNFT.ownerOf(invoiceId), address(pool));
         assertEq(stablecoin.balanceOf(business), 900 * 10 ** 18); // Received advance
-        
+
         (,,, InvoiceNFT.InvoiceStatus status,) = invoiceNFT.invoices(invoiceId);
-        assertEq(uint(status), uint(InvoiceNFT.InvoiceStatus.Financed));
+        assertEq(uint256(status), uint256(InvoiceNFT.InvoiceStatus.Financed));
     }
-    
+
     function testRepayInvoice() public {
         // Setup state to be financed
         vm.prank(investor);
         pool.deposit(2000 * 10 ** 18);
-        
-        uint256 invoiceId = invoiceNFT.mintInvoice(business, "ipfs://", 1000 * 10 ** 18, 900 * 10 ** 18, block.timestamp + 30 days);
-        
+
+        uint256 invoiceId =
+            invoiceNFT.mintInvoice(business, "ipfs://", 1000 * 10 ** 18, 900 * 10 ** 18, block.timestamp + 30 days);
+
         vm.prank(business);
         invoiceNFT.approve(address(pool), invoiceId);
-        
+
         pool.financeInvoice(invoiceId);
-        
+
         uint256 preRepayPoolValue = pool.totalPoolValue();
-        
+
         // Repay
         vm.prank(payer);
         pool.repayInvoice(invoiceId);
-        
+
         assertEq(pool.totalPoolValue(), preRepayPoolValue + 100 * 10 ** 18); // earned yield
-        
+
         (,,, InvoiceNFT.InvoiceStatus status,) = invoiceNFT.invoices(invoiceId);
-        assertEq(uint(status), uint(InvoiceNFT.InvoiceStatus.Repaid));
+        assertEq(uint256(status), uint256(InvoiceNFT.InvoiceStatus.Repaid));
     }
 }

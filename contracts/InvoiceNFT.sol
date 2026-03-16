@@ -13,7 +13,12 @@ contract InvoiceNFT is ERC721URIStorage, AccessControl {
 
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
-    enum InvoiceStatus { Listed, Financed, Repaid, Defaulted }
+    enum InvoiceStatus {
+        Listed,
+        Financed,
+        Repaid,
+        Defaulted
+    }
 
     struct InvoiceDetails {
         uint256 faceValue;
@@ -25,7 +30,9 @@ contract InvoiceNFT is ERC721URIStorage, AccessControl {
 
     mapping(uint256 => InvoiceDetails) public invoices;
 
-    event InvoiceMinted(uint256 indexed tokenId, address indexed business, uint256 faceValue, uint256 advanceAmount, uint256 dueDate);
+    event InvoiceMinted(
+        uint256 indexed tokenId, address indexed business, uint256 faceValue, uint256 advanceAmount, uint256 dueDate
+    );
     event InvoiceStatusChanged(uint256 indexed tokenId, InvoiceStatus newStatus);
 
     constructor() ERC721("InvoiceX NFT", "INVX") {
@@ -36,13 +43,11 @@ contract InvoiceNFT is ERC721URIStorage, AccessControl {
     /**
      * @notice Mints a new Invoice NFT
      */
-    function mintInvoice(
-        address business,
-        string memory uri,
-        uint256 faceValue,
-        uint256 advanceAmount,
-        uint256 dueDate
-    ) external onlyRole(MINTER_ROLE) returns (uint256) {
+    function mintInvoice(address business, string memory uri, uint256 faceValue, uint256 advanceAmount, uint256 dueDate)
+        external
+        onlyRole(MINTER_ROLE)
+        returns (uint256)
+    {
         _tokenIds++;
         uint256 newItemId = _tokenIds;
 
@@ -71,7 +76,12 @@ contract InvoiceNFT is ERC721URIStorage, AccessControl {
         emit InvoiceStatusChanged(tokenId, newStatus);
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override(ERC721URIStorage, AccessControl) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC721URIStorage, AccessControl)
+        returns (bool)
+    {
         return super.supportsInterface(interfaceId);
     }
 }

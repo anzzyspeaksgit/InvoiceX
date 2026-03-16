@@ -18,14 +18,15 @@ contract InvoiceNFTTest is Test {
     function testMintInvoice() public {
         vm.prank(minter);
         uint256 id = nft.mintInvoice(business, "ipfs://hash", 1000, 900, block.timestamp + 30 days);
-        
+
         assertEq(nft.ownerOf(id), business);
         assertEq(nft.tokenURI(id), "ipfs://hash");
-        
-        (uint256 faceValue, uint256 advanceAmount, uint256 dueDate, InvoiceNFT.InvoiceStatus status, address biz) = nft.invoices(id);
+
+        (uint256 faceValue, uint256 advanceAmount, uint256 dueDate, InvoiceNFT.InvoiceStatus status, address biz) =
+            nft.invoices(id);
         assertEq(faceValue, 1000);
         assertEq(advanceAmount, 900);
-        assertEq(uint(status), uint(InvoiceNFT.InvoiceStatus.Listed));
+        assertEq(uint256(status), uint256(InvoiceNFT.InvoiceStatus.Listed));
         assertEq(biz, business);
     }
 
@@ -36,7 +37,7 @@ contract InvoiceNFTTest is Test {
         vm.stopPrank();
 
         (,,, InvoiceNFT.InvoiceStatus status,) = nft.invoices(id);
-        assertTrue(uint(status) == uint(InvoiceNFT.InvoiceStatus.Financed));
+        assertTrue(uint256(status) == uint256(InvoiceNFT.InvoiceStatus.Financed));
     }
 
     function test_RevertIf_NoRole() public {
@@ -44,7 +45,7 @@ contract InvoiceNFTTest is Test {
         vm.expectRevert();
         nft.mintInvoice(business, "ipfs://hash", 1000, 900, block.timestamp + 30 days);
     }
-    
+
     function testSupportsInterface() public {
         assertTrue(nft.supportsInterface(0x80ac58cd)); // ERC721
     }

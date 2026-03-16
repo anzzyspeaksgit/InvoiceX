@@ -45,7 +45,7 @@ contract FactoringPool is BaseRWA {
         uint256 sharesToMint = (amount * PRECISION) / currentPrice;
 
         stablecoin.safeTransferFrom(msg.sender, address(this), amount);
-        
+
         totalPoolValue += amount;
         _mint(msg.sender, sharesToMint);
 
@@ -66,7 +66,7 @@ contract FactoringPool is BaseRWA {
 
         totalPoolValue -= amountToReturn;
         _burn(msg.sender, shares);
-        
+
         stablecoin.safeTransfer(msg.sender, amountToReturn);
 
         emit Withdrawn(msg.sender, shares, amountToReturn);
@@ -77,14 +77,14 @@ contract FactoringPool is BaseRWA {
      */
     function financeInvoice(uint256 tokenId) external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
         require(invoiceNFT.ownerOf(tokenId) != address(0), "Invoice not minted");
-        (, uint256 advanceAmount, , InvoiceNFT.InvoiceStatus status, address business) = invoiceNFT.invoices(tokenId);
-        
+        (, uint256 advanceAmount,, InvoiceNFT.InvoiceStatus status, address business) = invoiceNFT.invoices(tokenId);
+
         require(status == InvoiceNFT.InvoiceStatus.Listed, "Invoice not listed");
         require(stablecoin.balanceOf(address(this)) >= advanceAmount, "Insufficient liquidity");
 
         // Transfer NFT to the pool (requires business to have approved the pool)
         invoiceNFT.transferFrom(business, address(this), tokenId);
-        
+
         // Update status
         invoiceNFT.updateStatus(tokenId, InvoiceNFT.InvoiceStatus.Financed);
 
@@ -102,8 +102,8 @@ contract FactoringPool is BaseRWA {
      * @notice Repay an invoice (typically called by business or payer)
      */
     function repayInvoice(uint256 tokenId) external nonReentrant {
-        (uint256 faceValue, uint256 advanceAmount, , InvoiceNFT.InvoiceStatus status, ) = invoiceNFT.invoices(tokenId);
-        
+        (uint256 faceValue, uint256 advanceAmount,, InvoiceNFT.InvoiceStatus status,) = invoiceNFT.invoices(tokenId);
+
         require(status == InvoiceNFT.InvoiceStatus.Financed, "Invoice not financed");
         require(invoiceNFT.ownerOf(tokenId) == address(this), "Pool does not own invoice");
 

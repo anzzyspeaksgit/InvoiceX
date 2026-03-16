@@ -19,7 +19,7 @@ contract PaymentSettlement is Ownable {
     function settleInvoicePayment(uint256 invoiceId, uint256 amount) external {
         address currentOwner = invoiceNFT.ownerOf(invoiceId);
         require(paymentToken.transferFrom(msg.sender, currentOwner, amount), "Settlement transfer failed");
-        
+
         emit PaymentSettled(invoiceId, currentOwner, amount);
     }
 }

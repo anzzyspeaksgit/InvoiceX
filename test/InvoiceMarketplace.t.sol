@@ -43,8 +43,9 @@ contract InvoiceMarketplaceTest is Test {
 
     function testListingAndBuying() public {
         // Mint NFT to seller
-        uint256 invoiceId = invoiceNFT.mintInvoice(seller, "ipfs://test", 1000 * 10 ** 18, 900 * 10 ** 18, block.timestamp + 30 days);
-        
+        uint256 invoiceId =
+            invoiceNFT.mintInvoice(seller, "ipfs://test", 1000 * 10 ** 18, 900 * 10 ** 18, block.timestamp + 30 days);
+
         // Seller lists it
         vm.startPrank(seller);
         invoiceNFT.approve(address(marketplace), invoiceId);
@@ -67,9 +68,9 @@ contract InvoiceMarketplaceTest is Test {
         // Check ownership and balances
         assertEq(invoiceNFT.ownerOf(invoiceId), buyer);
         assertEq(paymentToken.balanceOf(seller), 10500 * 10 ** 18); // 10000 + 500
-        assertEq(paymentToken.balanceOf(buyer), 9500 * 10 ** 18);  // 10000 - 500
-        
-        (, , , bool finalActive) = marketplace.listings(invoiceId);
+        assertEq(paymentToken.balanceOf(buyer), 9500 * 10 ** 18); // 10000 - 500
+
+        (,,, bool finalActive) = marketplace.listings(invoiceId);
         assertFalse(finalActive);
     }
 }
