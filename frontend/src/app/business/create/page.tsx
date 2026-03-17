@@ -3,15 +3,34 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useState } from "react";
+import { useAccount } from "wagmi";
+import { useMintInvoice } from "@/hooks/useInvoiceNFT";
+import { parseUnits } from "viem";
 
 export default function CreateInvoice() {
+  const { address } = useAccount();
+  const { mint, isPending, isSuccess } = useMintInvoice();
+
   const [amount, setAmount] = useState("");
   const [advance, setAdvance] = useState("");
   const [dueDate, setDueDate] = useState("");
 
   const handleMint = (e: React.FormEvent) => {
     e.preventDefault();
-    alert("Smart contract integration pending. Face value: " + amount + ", Advance: " + advance);
+    if (!address) return alert("Please connect your wallet first.");
+    
+    try {
+      const faceValueWei = parseUnits(amount, 18);
+      const advanceAmountWei = parseUnits(advance, 18);
+      const dueTimestamp = BigInt(Math.floor(new Date(dueDate).getTime() / 1000));
+      
+      // We pass a dummy IPFS URI for hackathon demo purposes. In production, 
+      // we would upload actual invoice JSON metadata to IPFS/Arweave here.
+      mint(address, "ipfs://Qmdummyhash", faceValueWei, advanceAmountWei, dueTimestamp);
+    } catch (error) {
+      console.error(error);
+      alert("Error formatting inputs");
+    }
   };
 
   return (
@@ -22,6 +41,12 @@ export default function CreateInvoice() {
           <Button variant="ghost" size="sm">Back</Button>
         </Link>
       </div>
+
+      {isSuccess && (
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-md">
+          Invoice successfully tokenized! Please check your Business Portal.
+        </div>
+      )}
 
       <form onSubmit={handleMint} className="space-y-6">
         <div>
@@ -70,8 +95,8 @@ export default function CreateInvoice() {
           />
         </div>
 
-        <Button type="submit" className="w-full">
-          Tokenize & Request Liquidity
+        <Button type="submit" className="w-full" disabled={isPending || !address}>
+          {isPending ? "Tokenizing..." : "Tokenize & Request Liquidity"}
         </Button>
       </form>
     </div>
